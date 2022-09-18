@@ -32,9 +32,10 @@ def index():
             engine="text-similarity-davinci-001"
         )
         valid_results = []
+        final_results =[]
         valid_index= []
         
-        embedding_vector_for_generated = embedding_vector['data'][-5: None :1]
+        embedding_vector_for_generated = embedding_vector['data'][-5::1]
         embedding_vector_for_amazon = embedding_vector['data'][0:-5:1]
         
         # Get the closest amazon product type 
@@ -58,17 +59,19 @@ def index():
         valid_results_without_dup = [*set(valid_results)]
         valid_index_without_dup = [*set(valid_index)]
 
-        #get the amazon product types that are closest to original keywords 
+        # get the amazon product types that are closest to original keywords 
         candid_score_dict = {}
         for index in valid_index_without_dup: 
             similarity_score = np.dot(embedding_vector_for_amazon[index]['embedding'], embedding_vector['data'][index_for_keyword]['embedding'])
             candid_score_dict[index] = similarity_score
         
-        sorted_candid_score_dict =dict(sorted(candid_score_dict.items(),key=lambda item: item[1]))
+        sorted_candid_score_dict =dict(sorted(candid_score_dict.items(),reverse=True, key=lambda item: item[1]))
+        print(sorted_candid_score_dict)
         for final_index in sorted_candid_score_dict.keys(): 
-            valid_results.append(product_list[final_index])
+            final_results.append(product_list[final_index])
+            print(f"final_index:{final_index} \n product: {product_list[final_index]}")
             
-        response_text = response.choices[0].text + f"\n valid amazon types : {valid_results[:5]}" 
+        response_text = response.choices[0].text + f"\n valid amazon types : {final_results}" 
         return redirect(url_for("index", result=response_text))
 
     result = request.args.get("result")
